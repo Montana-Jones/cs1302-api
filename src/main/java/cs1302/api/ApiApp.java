@@ -59,7 +59,7 @@ public class ApiApp extends Application {
     Stage stage;
     Scene scene;
     VBox vbox;
-    VBox top;
+    HBox top;
     HBox mid;
     HBox bottom;
     //Label instructions;
@@ -81,20 +81,20 @@ public class ApiApp extends Application {
         this.stage = null;
         this.scene = null;
         vbox = new VBox();
-        top = new VBox();
+        top = new HBox(8);
         top.setAlignment(Pos.BOTTOM_CENTER);
         mid = new HBox(8);
         mid.setMinWidth(640);
         bottom = new HBox(8);
         bottom.setAlignment(Pos.BOTTOM_CENTER);
-        //instructions = new Label("Select a year and click the button to generate a random movie!");
-        //instructions.setAlignment(Pos.BOTTOM_LEFT);
-        //instructions.setFont(new Font("Open Sans", 14));
         plot = new Label("Blah blah blah blah");      //replace with ALOTO info
         plot.setFont(new Font("Open Sans", 14));
         yearOptions = createYearOptions();
-        yearOptions.setMaxWidth(200);
+        yearOptions.setMinWidth(150);
         yearOptions.setStyle("-fx-font: 14px \"Open Sans\";");
+        genreOptions = createGenreOptions();
+        genreOptions.setMinWidth(300);
+        genreOptions.setStyle("-fx-font: 14px \"Open Sans\";");
         button = new Button("Generate a random movie!");
         button.setMaxWidth(400);
         button.setTextAlignment(TextAlignment.CENTER);
@@ -108,9 +108,11 @@ public class ApiApp extends Application {
     /** {@inheritDoc} */
     @Override
     public void init() {
-        VBox.setVgrow(top, Priority.ALWAYS);
+        HBox.setHgrow(top, Priority.ALWAYS);
         HBox.setHgrow(mid, Priority.ALWAYS);
         HBox.setHgrow(bottom, Priority.ALWAYS);
+        HBox.setHgrow(genreOptions, Priority.ALWAYS);
+        HBox.setHgrow(yearOptions, Priority.ALWAYS);
         top.getChildren().addAll(genreOptions, yearOptions);
         mid.getChildren().addAll(frame, plot);
         bottom.getChildren().addAll(button);
@@ -194,7 +196,7 @@ public class ApiApp extends Application {
      */
     private ComboBox<String> createGenreOptions() {
         ComboBox<String> op = new ComboBox<>();
-        op.getChildren().addAll(
+        op.getItems().addAll(
             new String("Any genre"),
             new String("Action"),
             new String("Comedy"),
@@ -223,15 +225,18 @@ public class ApiApp extends Application {
      */
     public void instructionsAlert() {
         Platform.runLater(() -> {
-            String s = "Welcome to the random movie generator! Just select a year\n";
-            s += "from the drop-down menu and click the button to get started. \n";
-            s += "For the sake of keeping this safe for work, movies rated R or higher\n";
-            s += "have been excluded from the results. So enjoy and happy clicking!";
+            String s = "Welcome to the random movie generator!\n\n";
+            s += "Just select a decade and/or a genre from the menu and click the\n";
+            s += "button to get started. If you don't choose a decade or a genre,\n";
+            s += "the search will be completely random.\n\n";
+            s += "For the sake of keeping this SFW, movies rated R or\n";
+            s += "higher have been excluded from the results.\n\n";
+            s += "So enjoy and happy clicking!";
             TextArea text = new TextArea(s);
             Alert alert = new Alert(AlertType.INFORMATION);
             alert.getDialogPane().setContent(text);
-            alert.setHeight(250.0);
-            alert.setWidth(500.0);
+            alert.setHeight(350.0);
+            alert.setWidth(475.0);
             alert.setResizable(false);
             alert.showAndWait();
         });
