@@ -62,7 +62,6 @@ public class ApiApp extends Application {
     HBox top;
     HBox mid;
     HBox bottom;
-    //Label instructions;
     Label plot;
     ComboBox<String> yearOptions;
     ComboBox<String> genreOptions;
@@ -72,6 +71,7 @@ public class ApiApp extends Application {
 
     private URI imdb;
     private String url;
+    private String[] loadingImgs;
 
     /**
      * Constructs an {@code ApiApp} object. This default (i.e., no argument)
@@ -90,10 +90,10 @@ public class ApiApp extends Application {
         plot = new Label("Blah blah blah blah");      //replace with ALOTO info
         plot.setFont(new Font("Open Sans", 14));
         yearOptions = createYearOptions();
-        yearOptions.setMinWidth(150);
+        yearOptions.setMinWidth(175);
         yearOptions.setStyle("-fx-font: 14px \"Open Sans\";");
         genreOptions = createGenreOptions();
-        genreOptions.setMinWidth(300);
+        genreOptions.setMinWidth(400);
         genreOptions.setStyle("-fx-font: 14px \"Open Sans\";");
         button = new Button("Generate a random movie!");
         button.setMaxWidth(400);
@@ -103,6 +103,7 @@ public class ApiApp extends Application {
         frame.setFitWidth(344);
         frame.setPreserveRatio(true);
         poster = new Image(DEF_BG);
+        loadingImgs = setLoadingImgs();
     } // ApiApp
 
     /** {@inheritDoc} */
@@ -117,7 +118,7 @@ public class ApiApp extends Application {
         mid.getChildren().addAll(frame, plot);
         bottom.getChildren().addAll(button);
         vbox.getChildren().addAll(top, mid, bottom);
-        button.setDisable(true);
+
 
 
 
@@ -165,6 +166,107 @@ public class ApiApp extends Application {
 
 
     //private methods here
+
+    /**
+     * This method generates a random movie based on the user's choices.
+     */
+    private void generateMovie() {
+        String year = URLEncoder.encode(setYear(yearOptions.getValue()), StandardCharsets.UTF_8);
+        String genre = "";
+
+    } //generateMovie
+
+    /**
+     * This method sets the year for the movie generator.
+     *
+     * @param value the value to compare
+     * @return the year for the HttpRequest
+     */
+    private String setYear(String value) {
+        String y = "";
+        if (value.equalsIgnoreCase("Any decade")) {
+            y = "";
+        } else if (value.equalsIgnoreCase("1950s")) {
+            y = "&release_date=1950-01-01,1959-12-31";
+        } else if (value.equalsIgnoreCase("1960s")) {
+            y = "&release_date=1960-01-01,1969-12-31";
+        } else if (value.equalsIgnoreCase("1970s")) {
+            y = "&release_date=1970-01-01,1979-12-31";
+        } else if (value.equalsIgnoreCase("1980s")) {
+            y = "&release_date=1980-01-01,1989-12-31";
+        } else if (value.equalsIgnoreCase("1990s")) {
+            y = "&release_date=1990-01-01,1999-12-31";
+        } else if (value.equalsIgnoreCase("2000s")) {
+            y = "&release_date=2000-01-01,2009-12-31";
+        } else if (value.equalsIgnoreCase("2010s")) {
+            y = "&release_date=2010-01-01,2019-12-31";
+        } //else
+
+        return y;
+    } //setYear
+
+    /**
+     * This method sets the genre for the HttpRequest.
+     *
+     * @param value the value to compare
+     * @return the value to use in the HttpRequest
+     */
+    private String setGenre(String value) {
+        String g = "";
+        if (value.equalsIgnoreCase("Any genre")) {
+            g = "";
+        } else if (value.equalsIgnoreCase("Action")) {
+            g = "&genres=action";
+        } else if (value.equalsIgnoreCase("Comedy")) {
+            g = "&genres=comedy";
+        } else if (value.equalsIgnoreCase("Family")) {
+            g = "&genres=family";
+        } else if (value.equalsIgnoreCase("Mystery")) {
+            g = "&genres=mystery";
+        } else if (value.equalsIgnoreCase("Sci-Fi")) {
+            g = "&genres=sci_fi";
+        } else if (value.equalsIgnoreCase("Adventure")) {
+            g = "&genres=adventure";
+        } else if (value.equalsIgnoreCase("Fantasy")) {
+            g = "&genres=fantasy";
+        } else if (value.equalsIgnoreCase("Horror")) {
+            g = "&genres=horror";
+        } else if (value.equalsIgnoreCase("Animation")) {
+            g = "&genres=animation";
+        } else if (value.equalsIgnoreCase("Drama")) {
+            g = "&genres=drama";
+        } else if (value.equalsIgnoreCase("Musical")) {
+            g = "&genres=musical";
+        } else if (value.equalsIgnoreCase("Romance")) {
+            g = "&genres=romance";
+        } else if (value.equalsIgnoreCase("Thriller")) {
+            g = "&genres=thriller";
+        } //else
+
+        return g;
+    } //setGenre
+
+
+
+
+
+    /**
+     * This method creates the String array with the loading image links.
+     *
+     * @return the new String array
+     */
+    private String[] setLoadingImgs() {
+        String[] s = new String[6];
+        s[0] = "file:resources/spiderman2.jpg";
+        s[1] = "file:resources/shawshank.jpg";
+        s[2] = "file:resources/the_craft.jpg";
+        s[3] = "file:resources/10_things.jpg";
+        s[4] = "file:resources/castaway.jpg";
+        s[5] = "file:resources/the_apartment.jpg";
+
+        return s;
+    } //setLoadingImgs
+
 
     /**
      * Creates a ComboBox with the decades to choose from.
@@ -218,8 +320,6 @@ public class ApiApp extends Application {
     } //genreOptions
 
 
-
-
     /**
      * This method creates an instructions alert window.
      */
@@ -240,6 +340,8 @@ public class ApiApp extends Application {
             alert.setResizable(false);
             alert.showAndWait();
         });
+
+
     } //instructionsAlert
 
 
