@@ -4,9 +4,10 @@ package cs1302.api;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.net.http.HttpResponse.BodyHandlers;
 import java.net.URI;
 import java.net.URLEncoder;
-import java.net.http.HttpResponse.BodyHandlers;
+import java.nio.charset.StandardCharsets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -39,6 +40,8 @@ import javafx.collections.ObservableList;
 import javafx.geometry.Pos;
 
 //import exceptions
+import java.io.IOException;
+import java.lang.InterruptedException;
 
 /**
  * Represents an application that generates a random movie with its plot and other information.
@@ -72,6 +75,7 @@ public class ApiApp extends Application {
     private URI imdb;
     private String url;
     private String[] loadingImgs;
+    int resultIndex;
 
     /**
      * Constructs an {@code ApiApp} object. This default (i.e., no argument)
@@ -104,6 +108,7 @@ public class ApiApp extends Application {
         frame.setPreserveRatio(true);
         poster = new Image(DEF_BG);
         loadingImgs = setLoadingImgs();
+        resultIndex = 0;
     } // ApiApp
 
     /** {@inheritDoc} */
@@ -119,13 +124,17 @@ public class ApiApp extends Application {
         bottom.getChildren().addAll(button);
         vbox.getChildren().addAll(top, mid, bottom);
 
+        Runnable t = () -> {
+            System.out.println("starting");
+            button.setDisable(true);
+            generateMovie();
+            button.setDisable(false);
+            System.out.println("done");
+        }; //t
 
-
-
-        //System.out.println(Font.getFamilies());
-        //System.out.println("\n\n");
-        //System.out.println(Font.getFontNames("Open Sans"));
-
+        button.setOnAction(event -> {
+            runNow(t);
+        });
 
 
 
@@ -171,9 +180,58 @@ public class ApiApp extends Application {
      * This method generates a random movie based on the user's choices.
      */
     private void generateMovie() {
-        String year = URLEncoder.encode(setYear(yearOptions.getValue()), StandardCharsets.UTF_8);
-        String genre = "";
+        try {
+            String year = URLEncoder
+                .encode(setYear(yearOptions.getValue()), StandardCharsets.UTF_8);
+            String genre = URLEncoder
+                .encode(setGenre(genreOptions.getValue()), StandardCharsets.UTF_8);
+            String urlIMDb = "https://imdb-api.com/API/AdvancedSearch/k_hcvcf6rk?title_type=feature";
+            String queryIMDb = urlIMDb + year + genre
+                + "&certificates=us:G,us:PG,us:PG-13&count=100";
+            HttpRequest requestIMDb = HttpRequest.newBuilder()
+                .uri(URI.create(urlIMDb))
+                .build();
+            HttpResponse<String> responseIMDb = HTTP_CLIENT
+                .send(requestIMDb, BodyHandlers.ofString());
+            String jsonStringIMDb = responseIMDb.body();
+            IMDBResponse imdbResponse = GSON
+                .fromJson(jsonStringIMDb, IMDBResponse.class);
+            IMDBResult imdbRes = imdbResponse.results[resultIndex];
+            System.out.println();
+            System.out.println(jsonStringIMDb);
+            System.out.println();
 
+            String movieTitle = imdbRes.title.replaceAll(" ", "%20");
+            System.out.println(movieTitle);
+            //movieTitle = movieTitle.replaceAll("?", "%3F");
+            String urlR = "https://movie-database-alternative.p.rapidapi.com/?s=";
+            urlR += movieTitle + "&r=json&page=1";
+            HttpRequest posterRequest = HttpRequest.newBuilder()
+                .uri(URI.create(urlR))
+                .header("X-RapidAPI-Key", "7178cc256bmsh31c7770921fb3ddp1e3ff2jsn946da8ba257d")
+                .header("X-RapidAPI-Host", "movie-database-alternative.p.rapidapi.com")
+                //.method("GET", HttpRequest.BodyPublishers.noBody())
+                .build();
+            HttpResponse<String> posterResponse = HttpClient.newHttpClient()
+                .send(posterRequest, BodyHandlers.ofString());
+            //System.out.println(posterResponse.body());
+            String jsonStringPoster = posterResponse.body();
+            System.out.println();
+            System.out.println(jsonStringPoster);
+            System.out.println();
+            PosterResponse posterRes = GSON
+                .fromJson(jsonStringPoster, PosterResponse.class);
+
+            poster = new Image(posterRes.search[1].poster);
+
+            if (resultIndex >= 100) {
+                resultIndex = 0;
+            } else {
+                resultIndex++;
+            }
+        } catch (IOException | InterruptedException ioe) {
+            System.out.println("exception thrown: ioe or ie");
+        } //catch
     } //generateMovie
 
     /**
@@ -318,6 +376,24 @@ public class ApiApp extends Application {
 
         return op;
     } //genreOptions
+
+
+    /**
+     * Creates and immediately starts a new daemon thread that executes
+     * {@code target.run()}. This method, which may be called from any thread,
+     * will return immediately its caller.
+     * @param target the object whose {@code run} method is invoked when this
+     * thread is started.
+     */
+    public static void runNow(Runnable target) {
+        Thread t = new Thread(target);
+        t.setDaemon(true);
+        t.start();
+    } //runNow
+
+
+
+
 
 
     /**
