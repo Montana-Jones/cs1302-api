@@ -1,10 +1,12 @@
 package cs1302.api;
 
+import com.google.gson.annotations.SerializedName;
+
 /**
  * Represents a response from the Movie Database Alternative API.
  */
 public class PosterResponse {
-    PosterResult[] search;
+    @SerializedName("Search") PosterResult[] search;
     int totalResults;
-    boolean response;
+    @SerializedName("Response") boolean response;
 } //PosterResponse

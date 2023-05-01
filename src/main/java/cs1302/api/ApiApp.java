@@ -181,13 +181,16 @@ public class ApiApp extends Application {
      */
     private void generateMovie() {
         try {
-            String year = URLEncoder
-                .encode(setYear(yearOptions.getValue()), StandardCharsets.UTF_8);
-            String genre = URLEncoder
-                .encode(setGenre(genreOptions.getValue()), StandardCharsets.UTF_8);
+            //String year = URLEncoder
+            //.encode(setYear(yearOptions.getValue()), StandardCharsets.UTF_8);
+            //String genre = URLEncoder
+            //.encode(setGenre(genreOptions.getValue()), StandardCharsets.UTF_8);
+            String year = setYear(yearOptions.getValue());
+            String genre = setYear(genreOptions.getValue());
             String urlIMDb = "https://imdb-api.com/API/AdvancedSearch/k_hcvcf6rk?title_type=feature";
             String queryIMDb = urlIMDb + year + genre
                 + "&certificates=us:G,us:PG,us:PG-13&count=100";
+            System.out.println(queryIMDb);
             HttpRequest requestIMDb = HttpRequest.newBuilder()
                 .uri(URI.create(urlIMDb))
                 .build();
@@ -222,8 +225,8 @@ public class ApiApp extends Application {
             PosterResponse posterRes = GSON
                 .fromJson(jsonStringPoster, PosterResponse.class);
 
-            poster = new Image(posterRes.search[1].poster);
-
+            poster = new Image(posterRes.search[0].poster);
+            frame.setImage(poster);
             if (resultIndex >= 100) {
                 resultIndex = 0;
             } else {
