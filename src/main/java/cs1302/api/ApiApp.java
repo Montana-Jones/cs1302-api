@@ -204,29 +204,20 @@ public class ApiApp extends Application {
             System.out.println(jsonStringIMDb);
             System.out.println();
 
-            String movieTitle = imdbRes.title.replaceAll(" ", "%20");
-            System.out.println(movieTitle);
-            //movieTitle = movieTitle.replaceAll("?", "%3F");
-            String urlR = "https://movie-database-alternative.p.rapidapi.com/?s=";
-            urlR += movieTitle + "&r=json&page=1";
-            HttpRequest posterRequest = HttpRequest.newBuilder()
-                .uri(URI.create(urlR))
-                .header("X-RapidAPI-Key", "7178cc256bmsh31c7770921fb3ddp1e3ff2jsn946da8ba257d")
-                .header("X-RapidAPI-Host", "movie-database-alternative.p.rapidapi.com")
-                //.method("GET", HttpRequest.BodyPublishers.noBody())
+            //second request
+            String urlO = "http://www.omdbapi.com/?i=";
+            urlO += imdbResponse.results[resultIndex].id;
+            urlO += "&apikey=3015adf0&plot=full";
+            HttpRequest requestO = HttpRequest.newBuilder()
+                .uri(URI.create(urlO))
                 .build();
-            HttpResponse<String> posterResponse = HttpClient.newHttpClient()
-                .send(posterRequest, BodyHandlers.ofString());
-            //System.out.println(posterResponse.body());
-            String jsonStringPoster = posterResponse.body();
-            System.out.println();
-            System.out.println(jsonStringPoster);
-            System.out.println();
-            PosterResponse posterRes = GSON
-                .fromJson(jsonStringPoster, PosterResponse.class);
+            HttpResponse<String> responseO = HTTP_CLIENT
+                .send(requestO, BodyHandlers.ofString());
+            //OMDBResponse oResponse = fdf;
 
-            poster = new Image(posterRes.search[0].poster);
-            frame.setImage(poster);
+
+            //poster = new Image(posterRes.search[0].poster);
+                //frame.setImage(poster);
             if (resultIndex >= 100) {
                 resultIndex = 0;
             } else {
