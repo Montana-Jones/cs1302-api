@@ -38,6 +38,9 @@ import javafx.animation.KeyFrame;
 import javafx.util.Duration;
 import javafx.collections.ObservableList;
 import javafx.geometry.Pos;
+import java.lang.Math;
+import java.lang.StringBuilder;
+import java.time.LocalTime;
 
 //import exceptions
 import java.io.IOException;
@@ -59,13 +62,32 @@ public class ApiApp extends Application {
 
     public static final String DEF_BG = "file:resources/defaultbg.jpg";
 
+    public static final String DEF_TEXT = "During World War II when all the"
+        + " men are fighting the war, most of the jobs that were left vacant"
+        + " because of their absence were filled in by women. The owners of"
+        + " the baseball teams, not wanting baseball to be dormant indefinitely,"
+        + " decide to form teams with women. So scouts are sent all over the"
+        + " country to find women players. One of the scouts, passes through"
+        + " Oregon and finds a woman named Dottie Hinson, who is incredible."
+        + " He approaches her and asks her to try out but she's not interested."
+        + " However, her sister, Kit who wants to get out of Oregon, offers to"
+        + " go. But he agrees only if she can get her sister to go. When they"
+        + " try out, they're chosen and are on the same team. Jimmy Dugan,"
+        + " a former player, who's now a drunk, is the team manager."
+        + " But he doesn't feel as if it's a real job so he drinks and is not"
+        + " exactly doing his job. So Dottie steps up. After a few months when"
+        + " it appears the girls are not garnering any attention, the league is"
+        + " facing closure till Dottie does something that grabs attention."
+        + " And it isn't long Dottie is the star of the team and Kit feels"
+        + " like she's living in her shadow.";
+
     Stage stage;
     Scene scene;
     VBox vbox;
     HBox top;
     HBox mid;
     HBox bottom;
-    Label plot;
+    Label plotLabel;
     ComboBox<String> yearOptions;
     ComboBox<String> genreOptions;
     ImageView frame;
@@ -74,8 +96,8 @@ public class ApiApp extends Application {
 
     private URI imdb;
     private String url;
+    private String plot;
     private String[] loadingImgs;
-    int resultIndex;
 
     /**
      * Constructs an {@code ApiApp} object. This default (i.e., no argument)
@@ -91,8 +113,8 @@ public class ApiApp extends Application {
         mid.setMinWidth(640);
         bottom = new HBox(8);
         bottom.setAlignment(Pos.BOTTOM_CENTER);
-        plot = new Label("Blah blah blah blah");      //replace with ALOTO info
-        plot.setFont(new Font("Open Sans", 14));
+        plotLabel = new Label(formatString(DEF_TEXT));
+        plotLabel.setFont(new Font("Nimbus Sans", 12));
         yearOptions = createYearOptions();
         yearOptions.setMinWidth(175);
         yearOptions.setStyle("-fx-font: 14px \"Open Sans\";");
@@ -108,28 +130,43 @@ public class ApiApp extends Application {
         frame.setPreserveRatio(true);
         poster = new Image(DEF_BG);
         loadingImgs = setLoadingImgs();
-        resultIndex = 0;
     } // ApiApp
 
     /** {@inheritDoc} */
     @Override
     public void init() {
+        VBox.setVgrow(vbox, Priority.ALWAYS);
         HBox.setHgrow(top, Priority.ALWAYS);
         HBox.setHgrow(mid, Priority.ALWAYS);
         HBox.setHgrow(bottom, Priority.ALWAYS);
         HBox.setHgrow(genreOptions, Priority.ALWAYS);
         HBox.setHgrow(yearOptions, Priority.ALWAYS);
         top.getChildren().addAll(genreOptions, yearOptions);
-        mid.getChildren().addAll(frame, plot);
+        mid.getChildren().addAll(frame, plotLabel);
         bottom.getChildren().addAll(button);
         vbox.getChildren().addAll(top, mid, bottom);
 
+        //System.out.println(Font.getFamilies());
+        //System.out.println(Font.getFontNames("Nimbus Sans"));
+        //System.out.println("\n\n" + Font.getFontNames("Open Sans Light"));
+        //System.out.println("\n\n" + Font.getFontNames("SansSerif"));
+
+
         Runnable t = () -> {
-            System.out.println("starting");
-            button.setDisable(true);
-            generateMovie();
-            button.setDisable(false);
-            System.out.println("done");
+            try {
+                //System.out.println("starting");
+                button.setDisable(true);
+                for (int i = 0; i < 6; i++) {
+                    loadingScreen(i);
+                    Thread.sleep(1000);
+                } //for
+                generateMovie();
+                Platform.runLater(() -> plotLabel.setText(plot));
+                button.setDisable(false);
+                //System.out.println("done");
+            } catch (Throwable e) {
+                System.out.println(e.toString());
+            } //catch
         }; //t
 
         button.setOnAction(event -> {
@@ -181,52 +218,52 @@ public class ApiApp extends Application {
      */
     private void generateMovie() {
         try {
-            //String year = URLEncoder
-            //.encode(setYear(yearOptions.getValue()), StandardCharsets.UTF_8);
-            //String genre = URLEncoder
-            //.encode(setGenre(genreOptions.getValue()), StandardCharsets.UTF_8);
             String year = setYear(yearOptions.getValue());
-            String genre = setYear(genreOptions.getValue());
-            String urlIMDb = "https://imdb-api.com/API/AdvancedSearch/k_hcvcf6rk?title_type=feature";
+            System.out.println("year: " + year);
+            String genre = setGenre(genreOptions.getValue());
+            System.out.println("genre: " + genre);
+            String urlIMDb = "https://imdb-api.com/API/"
+                + "AdvancedSearch/k_hcvcf6rk?title_type=feature";
             String queryIMDb = urlIMDb + year + genre
                 + "&certificates=us:G,us:PG,us:PG-13&count=100";
             System.out.println(queryIMDb);
             HttpRequest requestIMDb = HttpRequest.newBuilder()
-                .uri(URI.create(urlIMDb))
+                .uri(URI.create(queryIMDb))
                 .build();
             HttpResponse<String> responseIMDb = HTTP_CLIENT
                 .send(requestIMDb, BodyHandlers.ofString());
             String jsonStringIMDb = responseIMDb.body();
             IMDBResponse imdbResponse = GSON
                 .fromJson(jsonStringIMDb, IMDBResponse.class);
-            IMDBResult imdbRes = imdbResponse.results[resultIndex];
-            System.out.println();
-            System.out.println(jsonStringIMDb);
-            System.out.println();
+            IMDBResult imdbRes = imdbResponse.results[0];
+
+            //System.out.println("\n\n" + jsonStringIMDb + "\n\n");
 
             //second request
             String urlO = "http://www.omdbapi.com/?i=";
-            urlO += imdbResponse.results[resultIndex].id;
+            urlO += imdbResponse.results[0].id;
             urlO += "&apikey=3015adf0&plot=full";
             HttpRequest requestO = HttpRequest.newBuilder()
                 .uri(URI.create(urlO))
                 .build();
             HttpResponse<String> responseO = HTTP_CLIENT
                 .send(requestO, BodyHandlers.ofString());
-            //OMDBResponse oResponse = fdf;
+            String jsonStringO = responseO.body();
+            //System.out.println("\n\n" + jsonStringO + "\n\n");
+            OMDBResponse oResponse = GSON
+                .fromJson(jsonStringO, OMDBResponse.class);
 
+            poster = new Image(imdbRes.image);
+            frame.setImage(poster);
 
-            //poster = new Image(posterRes.search[0].poster);
-                //frame.setImage(poster);
-            if (resultIndex >= 100) {
-                resultIndex = 0;
-            } else {
-                resultIndex++;
-            }
+            plot = formatString(oResponse.plot);
+            //plot.setText(oPlot);
+            //System.out.println("\n\n" + plot + "\n\n");
         } catch (IOException | InterruptedException ioe) {
             System.out.println("exception thrown: ioe or ie");
         } //catch
     } //generateMovie
+
 
     /**
      * This method sets the year for the movie generator.
@@ -236,24 +273,25 @@ public class ApiApp extends Application {
      */
     private String setYear(String value) {
         String y = "";
+        int yearRandom = 0;
         if (value.equalsIgnoreCase("Any decade")) {
-            y = "";
+            yearRandom = (int) (Math.random() * 72) + 1950;
         } else if (value.equalsIgnoreCase("1950s")) {
-            y = "&release_date=1950-01-01,1959-12-31";
+            yearRandom = (int) (Math.random() * 10) + 1950;
         } else if (value.equalsIgnoreCase("1960s")) {
-            y = "&release_date=1960-01-01,1969-12-31";
+            yearRandom = (int) (Math.random() * 10) + 1960;
         } else if (value.equalsIgnoreCase("1970s")) {
-            y = "&release_date=1970-01-01,1979-12-31";
+            yearRandom = (int) (Math.random() * 10) + 1970;
         } else if (value.equalsIgnoreCase("1980s")) {
-            y = "&release_date=1980-01-01,1989-12-31";
+            yearRandom = (int) (Math.random() * 10) + 1980;
         } else if (value.equalsIgnoreCase("1990s")) {
-            y = "&release_date=1990-01-01,1999-12-31";
+            yearRandom = (int) (Math.random() * 10) + 1990;
         } else if (value.equalsIgnoreCase("2000s")) {
-            y = "&release_date=2000-01-01,2009-12-31";
+            yearRandom = (int) (Math.random() * 10) + 2000;
         } else if (value.equalsIgnoreCase("2010s")) {
-            y = "&release_date=2010-01-01,2019-12-31";
+            yearRandom = (int) (Math.random() * 10) + 2010;
         } //else
-
+        y = "&release_date=" + yearRandom + "-01-01," + yearRandom + "-12-31";
         return y;
     } //setYear
 
@@ -264,41 +302,42 @@ public class ApiApp extends Application {
      * @return the value to use in the HttpRequest
      */
     private String setGenre(String value) {
+        value = genreOptions.getValue();
         String g = "";
-        if (value.equalsIgnoreCase("Any genre")) {
+        if (value.equals("Any genre")) {
             g = "";
-        } else if (value.equalsIgnoreCase("Action")) {
-            g = "&genres=action";
-        } else if (value.equalsIgnoreCase("Comedy")) {
-            g = "&genres=comedy";
-        } else if (value.equalsIgnoreCase("Family")) {
-            g = "&genres=family";
-        } else if (value.equalsIgnoreCase("Mystery")) {
-            g = "&genres=mystery";
-        } else if (value.equalsIgnoreCase("Sci-Fi")) {
-            g = "&genres=sci_fi";
-        } else if (value.equalsIgnoreCase("Adventure")) {
-            g = "&genres=adventure";
-        } else if (value.equalsIgnoreCase("Fantasy")) {
-            g = "&genres=fantasy";
-        } else if (value.equalsIgnoreCase("Horror")) {
-            g = "&genres=horror";
-        } else if (value.equalsIgnoreCase("Animation")) {
-            g = "&genres=animation";
-        } else if (value.equalsIgnoreCase("Drama")) {
-            g = "&genres=drama";
-        } else if (value.equalsIgnoreCase("Musical")) {
-            g = "&genres=musical";
-        } else if (value.equalsIgnoreCase("Romance")) {
-            g = "&genres=romance";
-        } else if (value.equalsIgnoreCase("Thriller")) {
-            g = "&genres=thriller";
+        } else {
+            g = "&genres=" + value.trim().toLowerCase();
+            g = g.replace(" ", "-");
         } //else
 
         return g;
     } //setGenre
 
 
+
+    /**
+     * Returns a formatted String for the plot section.
+     *
+     * @param orig the String to be formatted
+     * @return the formatted String
+     */
+    private String formatString(String orig) {
+        String[] works = orig.split(" ");
+        StringBuilder line = new StringBuilder();
+        StringBuilder result = new StringBuilder();
+        for (String work : works) {
+            if (line.length() + work.length() > 60) {
+                result.append(line).append("\n");
+                line = new StringBuilder();
+            }
+            line.append(work).append(" ");
+        }
+        result.append(line);
+
+        //System.out.println(result.toString());
+        return result.toString();
+    } //formatString
 
 
 
@@ -320,13 +359,23 @@ public class ApiApp extends Application {
     } //setLoadingImgs
 
 
+
+    /**
+     * This method cycles through the loading images.
+     * @param i the image index to set
+     */
+    private void loadingScreen(int i) {
+        poster = new Image(loadingImgs[i]);
+        frame.setImage(poster);
+    } //loadingScreen
+
+
     /**
      * Creates a ComboBox with the decades to choose from.
      *
      * @return the desired ComboBox
      */
     private ComboBox<String> createYearOptions() {
-        //ObservableList<String> years = new ObservableList<>();
         ComboBox<String> op = new ComboBox<>();
         op.getItems().addAll(
             new String("Any decade"),
@@ -341,6 +390,7 @@ public class ApiApp extends Application {
         op.setValue("Any decade");
         return op;
     } //yearOptions
+
 
 
     /**
@@ -372,6 +422,7 @@ public class ApiApp extends Application {
     } //genreOptions
 
 
+
     /**
      * Creates and immediately starts a new daemon thread that executes
      * {@code target.run()}. This method, which may be called from any thread,
@@ -384,9 +435,6 @@ public class ApiApp extends Application {
         t.setDaemon(true);
         t.start();
     } //runNow
-
-
-
 
 
 
