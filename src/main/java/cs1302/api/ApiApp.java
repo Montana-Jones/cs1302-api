@@ -112,22 +112,24 @@ public class ApiApp extends Application {
         mid = new HBox(8);
         mid.setMinWidth(640);
         bottom = new HBox(8);
+        bottom.setMinHeight(50);
         bottom.setAlignment(Pos.BOTTOM_CENTER);
         plotLabel = new Label(formatString(DEF_TEXT));
         plotLabel.setFont(new Font("Nimbus Sans", 12));
         yearOptions = createYearOptions();
         yearOptions.setMinWidth(175);
-        yearOptions.setStyle("-fx-font: 14px \"Open Sans\";");
+        yearOptions.setStyle("-fx-font: 14px \"Nimbus Sans\";");
         genreOptions = createGenreOptions();
         genreOptions.setMinWidth(400);
-        genreOptions.setStyle("-fx-font: 14px \"Open Sans\";");
+        genreOptions.setStyle("-fx-font: 14px \"Nimbus Sans\";");
         button = new Button("Generate a random movie!");
         button.setMaxWidth(400);
         button.setTextAlignment(TextAlignment.CENTER);
-        button.setFont(new Font("Open Sans Italic", 25));
+        button.setFont(new Font("Nimbus Sans Italic", 25));
         frame = new ImageView(DEF_BG);
         frame.setFitWidth(344);
-        frame.setPreserveRatio(true);
+        frame.setFitHeight(500);
+        frame.setPreserveRatio(false);
         poster = new Image(DEF_BG);
         loadingImgs = setLoadingImgs();
     } // ApiApp
@@ -139,6 +141,8 @@ public class ApiApp extends Application {
         HBox.setHgrow(top, Priority.ALWAYS);
         HBox.setHgrow(mid, Priority.ALWAYS);
         HBox.setHgrow(bottom, Priority.ALWAYS);
+        HBox.setHgrow(button, Priority.ALWAYS);
+        HBox.setHgrow(plotLabel, Priority.ALWAYS);
         HBox.setHgrow(genreOptions, Priority.ALWAYS);
         HBox.setHgrow(yearOptions, Priority.ALWAYS);
         top.getChildren().addAll(genreOptions, yearOptions);
@@ -146,26 +150,23 @@ public class ApiApp extends Application {
         bottom.getChildren().addAll(button);
         vbox.getChildren().addAll(top, mid, bottom);
 
-        //System.out.println(Font.getFamilies());
-        //System.out.println(Font.getFontNames("Nimbus Sans"));
-        //System.out.println("\n\n" + Font.getFontNames("Open Sans Light"));
-        //System.out.println("\n\n" + Font.getFontNames("SansSerif"));
-
-
         Runnable t = () -> {
             try {
-                //System.out.println("starting");
                 button.setDisable(true);
+                Platform.runLater(() -> plotLabel.setText("Loading..."));
                 for (int i = 0; i < 6; i++) {
                     loadingScreen(i);
-                    Thread.sleep(1000);
+                    Thread.sleep(1500);
                 } //for
                 generateMovie();
-                Platform.runLater(() -> plotLabel.setText(plot));
+                Platform.runLater(() -> {
+                    frame.setImage(poster);
+                    plotLabel.setText(plot);
+                });
                 button.setDisable(false);
-                //System.out.println("done");
             } catch (Throwable e) {
-                System.out.println(e.toString());
+                errorAlert();
+                button.setDisable(false);
             } //catch
         }; //t
 
@@ -186,13 +187,14 @@ public class ApiApp extends Application {
         this.scene = new Scene(this.vbox);
 
         // demonstrate how to load local asset using "file:resources/"
+        //see setLoadingImgs
 
         // some labels to display information
 
         // setup scene
 
         // setup stage
-        stage.setTitle("ApiApp!");
+        stage.setTitle("Random Movie App!");
         stage.setScene(this.scene);
         stage.setOnCloseRequest(event -> Platform.exit());
         stage.sizeToScene();
@@ -219,14 +221,12 @@ public class ApiApp extends Application {
     private void generateMovie() {
         try {
             String year = setYear(yearOptions.getValue());
-            System.out.println("year: " + year);
             String genre = setGenre(genreOptions.getValue());
-            System.out.println("genre: " + genre);
             String urlIMDb = "https://imdb-api.com/API/"
                 + "AdvancedSearch/k_hcvcf6rk?title_type=feature";
             String queryIMDb = urlIMDb + year + genre
                 + "&certificates=us:G,us:PG,us:PG-13&count=100";
-            System.out.println(queryIMDb);
+            //System.out.println(queryIMDb);
             HttpRequest requestIMDb = HttpRequest.newBuilder()
                 .uri(URI.create(queryIMDb))
                 .build();
@@ -236,8 +236,6 @@ public class ApiApp extends Application {
             IMDBResponse imdbResponse = GSON
                 .fromJson(jsonStringIMDb, IMDBResponse.class);
             IMDBResult imdbRes = imdbResponse.results[0];
-
-            //System.out.println("\n\n" + jsonStringIMDb + "\n\n");
 
             //second request
             String urlO = "http://www.omdbapi.com/?i=";
@@ -249,18 +247,15 @@ public class ApiApp extends Application {
             HttpResponse<String> responseO = HTTP_CLIENT
                 .send(requestO, BodyHandlers.ofString());
             String jsonStringO = responseO.body();
-            //System.out.println("\n\n" + jsonStringO + "\n\n");
             OMDBResponse oResponse = GSON
                 .fromJson(jsonStringO, OMDBResponse.class);
 
             poster = new Image(imdbRes.image);
-            frame.setImage(poster);
+            //frame.setImage(poster);
 
             plot = formatString(oResponse.plot);
-            //plot.setText(oPlot);
-            //System.out.println("\n\n" + plot + "\n\n");
         } catch (IOException | InterruptedException ioe) {
-            System.out.println("exception thrown: ioe or ie");
+            System.out.print("");
         } //catch
     } //generateMovie
 
@@ -327,7 +322,7 @@ public class ApiApp extends Application {
         StringBuilder line = new StringBuilder();
         StringBuilder result = new StringBuilder();
         for (String work : works) {
-            if (line.length() + work.length() > 60) {
+            if (line.length() + work.length() > 65) {
                 result.append(line).append("\n");
                 line = new StringBuilder();
             }
@@ -335,7 +330,6 @@ public class ApiApp extends Application {
         }
         result.append(line);
 
-        //System.out.println(result.toString());
         return result.toString();
     } //formatString
 
@@ -458,20 +452,25 @@ public class ApiApp extends Application {
             alert.setResizable(false);
             alert.showAndWait();
         });
-
-
     } //instructionsAlert
 
 
 
-
-
-
-
-
-
-
-
+    /**
+     * Creates and shows an alert window.
+     */
+    public void errorAlert() {
+        Platform.runLater(() -> {
+            String s = "Uh oh, something went wrong! Please try again.";
+            TextArea text = new TextArea(s);
+            Alert alert = new Alert(AlertType.ERROR);
+            alert.getDialogPane().setContent(text);
+            alert.setHeight(350.0);
+            alert.setWidth(475.0);
+            alert.setResizable(false);
+            alert.showAndWait();
+        });
+    } //errorAlert
 
 
 
