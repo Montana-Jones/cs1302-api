@@ -155,8 +155,8 @@ public class ApiApp extends Application {
                 button.setDisable(true);
                 Platform.runLater(() -> plotLabel.setText("Loading..."));
                 for (int i = 0; i < 6; i++) {
-                    loadingScreen(i);
                     Thread.sleep(1500);
+                    loadingScreen(i);
                 } //for
                 generateMovie();
                 Platform.runLater(() -> {
@@ -226,7 +226,6 @@ public class ApiApp extends Application {
                 + "AdvancedSearch/k_hcvcf6rk?title_type=feature";
             String queryIMDb = urlIMDb + year + genre
                 + "&certificates=us:G,us:PG,us:PG-13&count=100";
-            //System.out.println(queryIMDb);
             HttpRequest requestIMDb = HttpRequest.newBuilder()
                 .uri(URI.create(queryIMDb))
                 .build();
@@ -251,7 +250,6 @@ public class ApiApp extends Application {
                 .fromJson(jsonStringO, OMDBResponse.class);
 
             poster = new Image(imdbRes.image);
-            //frame.setImage(poster);
 
             plot = formatString(oResponse.plot);
         } catch (IOException | InterruptedException ioe) {
@@ -342,7 +340,7 @@ public class ApiApp extends Application {
      */
     private String[] setLoadingImgs() {
         String[] s = new String[6];
-        s[0] = "file:resources/spiderman2.jpg";
+        s[0] = "file:resources/callmebyyourname.jpg";
         s[1] = "file:resources/shawshank.jpg";
         s[2] = "file:resources/the_craft.jpg";
         s[3] = "file:resources/10_things.jpg";
